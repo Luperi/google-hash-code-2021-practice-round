@@ -58,8 +58,8 @@ def run_algo(filepath, output_filepath):
             pizzas.append(pizza_ingredients)
         count += 1
 
-    ordered_list_of_ingredients = dict(
-        sorted(list_of_ingredients.items(), key=lambda item: item[1]))
+    # ordered_list_of_ingredients = dict(
+    #     sorted(list_of_ingredients.items(), key=lambda item: item[1]))
     ordered_ingredients_per_pizza = dict(
         sorted(ingredients_per_pizza.items(), reverse=True, key=lambda item: item[1]))
 
@@ -77,46 +77,61 @@ def run_algo(filepath, output_filepath):
         3: [],
         2: []
     }
+    pss = {
+        4: [],
+        3: [],
+        2: []
+    }
 
-    for k in range(3):
-        while len(pizza_id_ordered_ingredient) > 3-k and teams[3-k+1] > 0:
-            ps = []
+    for team_index in range(3):
+        while len(pizza_id_ordered_ingredient) > 3-team_index and teams[3-team_index+1] > 0:
+            pss[3-team_index+1] = []
             id_pizza = pizza_id_ordered_ingredient[0]
             del pizza_id_ordered_ingredient[0]
-            ps.append(str(id_pizza))
+            pss[3-team_index+1].append(str(id_pizza))
 
-            list_of_ingredients = list(pizzas[id_pizza])
-            for _ in range(3-k):
+            for _ in range(3-team_index):
                 best_score = 0
                 best_comapare_pizza_id = None
                 best_compare_pizza_index = None
                 index = 0
+                list_of_ingredients = []
+                for ip in pss[3-team_index+1]:
+                    list_of_ingredients += list(pizzas[int(ip)])
                 for compare_pizza_id in pizza_id_ordered_ingredient:
                     if len(list_of_ingredients) + len(pizzas[compare_pizza_id]) < best_score:
                         break
                     coeff = get_coeff(list_of_ingredients, pizzas[compare_pizza_id])
-                    if coeff > best_score:
-                        best_score = coeff
-                        best_comapare_pizza_id = compare_pizza_id
-                        best_compare_pizza_index = index
+                    if coeff == 0:
+                        pass
+                        # for other_team_index in range(team_index+1, 3):
+                        #     if teams[3-other_team_index+1] > 0:
+                        #         pss[3-other_team_index+1].append(compare_pizza_id)
+                        #         del pizza_id_ordered_ingredient[index]
+                        #         teams[3-team_index+1] -= 1
+                        #         break
+                    else:
+                        if coeff > best_score:
+                            best_score = coeff
+                            best_comapare_pizza_id = compare_pizza_id
+                            best_compare_pizza_index = index
                     index += 1
-                list_of_ingredients += list(pizzas[best_comapare_pizza_id])
-                ps.append(str(best_comapare_pizza_id))
-                del pizza_id_ordered_ingredient[best_compare_pizza_index]
-            team_pizzas[4-k].append(ps)
-            teams[3-k+1] -= 1
+                if not best_comapare_pizza_id is None and not best_compare_pizza_index is None:
+                    pss[3-team_index+1].append(str(best_comapare_pizza_id))
+                    del pizza_id_ordered_ingredient[best_compare_pizza_index]
+            team_pizzas[4-team_index].append(pss[3-team_index+1])
+            teams[3-team_index+1] -= 1
 
     # writing to file
     lines = []
     file1 = open(output_filepath, 'w')
-    lines.append(
-        str(len(team_pizzas[4]) + len(team_pizzas[3]) + len(team_pizzas[2])))
-    for i in range(len(team_pizzas[4])):
-        lines.append("\n4 " + ' '.join(team_pizzas[4][i]))
-    for i in range(len(team_pizzas[3])):
-        lines.append("\n3 " + ' '.join(team_pizzas[3][i]))
-    for i in range(len(team_pizzas[2])):
-        lines.append("\n2 " + ' '.join(team_pizzas[2][i]))
+    tot = 0
+    for team_index in range(3):
+        for pzs in team_pizzas[3-team_index+1]:
+            if len(pzs) > 0:
+                tot += 1
+                lines.append("\n" + str(3-team_index+1) + ' ' + ' '.join(pzs))
+    lines.insert(0, str(tot))
     file1.writelines(lines)
     file1.close()
 
