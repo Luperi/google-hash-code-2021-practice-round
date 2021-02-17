@@ -8,9 +8,16 @@ filepaths = [
     'e_many_teams.in'
 ]
 
+def get_coeff(list1, dict1):
+    equals_num = 0
+    tot = len(list1)+len(dict1)
+    for i in list1:
+        if i in dict1:
+            equals_num += 1
+    diff_num = tot - equals_num*2
+    return diff_num/tot*diff_num
 
 def run_algo(filepath, output_filepath):
-    # Using readlines()
     file1 = open(filepath, 'r')
     Lines = file1.readlines()
 
@@ -19,15 +26,16 @@ def run_algo(filepath, output_filepath):
     list_of_ingredients = {}
     pizzas_per_ingredient = {}
     ingredients_per_pizza = {}
+    teams = {}
     # Strips the newline character
     for line in Lines:
         x = line.split()
         # HEADER
         if count == 0:
             pizzas_number = int(x[0])
-            team2 = int(x[1])
-            team3 = int(x[2])
-            team4 = int(x[3])
+            teams[2] =int(x[1])
+            teams[3] = int(x[2])
+            teams[4] = int(x[3])
         # PIZZA
         else:
             pizza_id = count - 1
@@ -59,35 +67,44 @@ def run_algo(filepath, output_filepath):
 
     pizza_id_ordered_ingredient = list(ordered_ingredients_per_pizza)
 
+    # print("pizzas", pizzas)
+    # print("pizzas_per_ingredient", pizzas_per_ingredient)
+    # print("ordered_ingredients_per_pizza", ordered_ingredients_per_pizza)
+
     # assign pizzas to teams
     team_pizzas = {
         4: [],
         3: [],
         2: []
     }
-    while len(pizza_id_ordered_ingredient) > 3 and team4 > 0:
-        ps = []
-        for j in range(4):
-            ps.append(str(pizza_id_ordered_ingredient[0]))
-            del pizza_id_ordered_ingredient[0]
-        team_pizzas[4].append(ps)
-        team4 -= 1
 
-    while len(pizza_id_ordered_ingredient) > 2 and team3 > 0:
-        ps = []
-        for j in range(3):
-            ps.append(str(pizza_id_ordered_ingredient[0]))
+    for k in range(3):
+        while len(pizza_id_ordered_ingredient) > 3-k and teams[3-k+1] > 0:
+            ps = []
+            id_pizza = pizza_id_ordered_ingredient[0]
             del pizza_id_ordered_ingredient[0]
-        team_pizzas[3].append(ps)
-        team3 -= 1
+            ps.append(str(id_pizza))
 
-    while len(pizza_id_ordered_ingredient) > 1 and team2 > 0:
-        ps = []
-        for j in range(2):
-            ps.append(str(pizza_id_ordered_ingredient[0]))
-            del pizza_id_ordered_ingredient[0]
-        team_pizzas[2].append(ps)
-        team2 -= 1
+            list_of_ingredients = list(pizzas[id_pizza])
+            for _ in range(3-k):
+                best_score = 0
+                best_comapare_pizza_id = None
+                best_compare_pizza_index = None
+                index = 0
+                for compare_pizza_id in pizza_id_ordered_ingredient:
+                    if len(list_of_ingredients) + len(pizzas[compare_pizza_id]) < best_score:
+                        break
+                    coeff = get_coeff(list_of_ingredients, pizzas[compare_pizza_id])
+                    if coeff > best_score:
+                        best_score = coeff
+                        best_comapare_pizza_id = compare_pizza_id
+                        best_compare_pizza_index = index
+                    index += 1
+                list_of_ingredients += list(pizzas[best_comapare_pizza_id])
+                ps.append(str(best_comapare_pizza_id))
+                del pizza_id_ordered_ingredient[best_compare_pizza_index]
+            team_pizzas[4-k].append(ps)
+            teams[3-k+1] -= 1
 
     # writing to file
     lines = []
@@ -113,9 +130,6 @@ def judge(filepath, output_filepath):
         x = line.split()
         if count == 0:
             pizzas_number = int(x[0])
-            team2 = int(x[1])
-            team3 = int(x[2])
-            team4 = int(x[3])
         else:
             ingredients_number = int(x[0])
             ingredients = []
@@ -149,5 +163,6 @@ def judge(filepath, output_filepath):
 
 
 for filepath in filepaths:
+    print("Running on: ", filepath)
     run_algo(filepath, filepath+'.out')
     judge(filepath, filepath+'.out')
